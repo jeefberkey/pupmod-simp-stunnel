@@ -135,6 +135,8 @@
 # @param gid
 #   The group id of the stunnel group
 #
+# @param pid Leave undef if no PID is desired. Default on systemd systems.
+#
 # All other configuration options can be found in the stunnel man pages
 # @see stunnel.conf(5)
 # @see stunnel.conf(8)
@@ -154,7 +156,6 @@
 # @param ocsp
 # @param ocsp_flags
 # @param output
-# @param pid
 # @param protocol
 # @param protocol_host
 # @param protocol_username
@@ -220,7 +221,7 @@ define stunnel::instance(
   Array[String]                               $openssl_cipher_suite    = ['HIGH','-SSLv2'],
   Array[String]                               $options                 = [],
   Optional[Stdlib::Absolutepath]              $output                  = undef,
-  Stdlib::Absolutepath                        $pid                     = "/var/run/stunnel/stunnel_${name}.pid",
+  Optional[Stdlib::Absolutepath]              $pid                     = undef,
   Optional[String]                            $protocol                = undef,
   Optional[Enum['basic','NTLM']]              $protocol_authentication = undef,
   Optional[String]                            $protocol_host           = undef,
@@ -296,6 +297,17 @@ define stunnel::instance(
     $_chroot = undef
   }
 
+  if $pid =~ Undef {
+    $on_systemd = 'systemd' in $facts['init_systems']
+    $_pid = $on_systemd ? {
+      true    => $pid,
+      default => "/var/run/stunnel/stunnel_${_safe_name}.pid"
+    }
+  } else {
+    $_pid = $pid
+  }
+
+
   file { "/etc/stunnel/stunnel_${_safe_name}.conf":
     ensure  => 'present',
     owner   => 'root',
@@ -360,6 +372,28 @@ define stunnel::instance(
       mode   => '0644'
     }
 
+    file { "${_chroot}/var/run":
+      ensure => 'directory',
+      owner  => 'root',
+      group  => 'root',
+      mode   => '0644'
+    }
+
+    # The selinux context settings are ignored if SELinux is disabled
+    ensure_resource('file', dirname("${_chroot}${_pid}"),
+      {
+        'ensure'  => 'directory',
+        'owner'   => $setuid,
+        'group'   => $setgid,
+        'mode'    => '0644',
+        'seluser' => 'system_u',
+        'selrole' => 'object_r',
+        'seltype' => 'stunnel_var_run_t',
+        'before'  => "Service[stunnel_${_safe_name}]"
+      }
+    )
+
+
     file { "${_chroot}/etc/pki":
       ensure => 'directory',
       owner  => 'root',
@@ -377,19 +411,23 @@ define stunnel::instance(
       require =>  $_require_pki
     }
   }
-
-  # The selinux context settings are ignored if SELinux is disabled
-  ensure_resource('file', dirname($pid),
-    {
-      'ensure'  => 'directory',
-      'owner'   => $setuid,
-      'group'   => $setgid,
-      'mode'    => '0644',
-      'seluser' => 'system_u',
-      'selrole' => 'object_r',
-      'seltype' => 'stunnel_var_run_t',
+  else {
+    if $_pid {
+      # The selinux context settings are ignored if SELinux is disabled
+      ensure_resource('file', dirname($_pid),
+        {
+          'ensure'  => 'directory',
+          'owner'   => $setuid,
+          'group'   => $setgid,
+          'mode'    => '0644',
+          'seluser' => 'system_u',
+          'selrole' => 'object_r',
+          'seltype' => 'stunnel_var_run_t',
+          'before'  => "Service[stunnel_${_safe_name}]"
+        }
+      )
     }
-  )
+  }
 
 
   # The rules are pulled together from the accept_* and connect_*

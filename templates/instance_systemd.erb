@@ -5,9 +5,8 @@
 Description=Start a stunnel_<%= @_safe_name %> listener
 
 [Service]
-Type=forking
+Type=simple
 ExecStart=/usr/bin/stunnel /etc/stunnel/stunnel_<%= @_safe_name %>.conf
-PIDFile=<%= "#{@_chroot}#{@pid}" %>
 KillMode=process
 LimitNOFILE=1048576
 LimitNPROC=infinity

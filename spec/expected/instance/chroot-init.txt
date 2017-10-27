@@ -37,11 +37,6 @@ group=`grep "setgid[[:space:]]*=" /etc/stunnel/stunnel_nfs.conf | sed -e 's/setg
 
 pidfile="/var/stunnel_nfs/var/run/stunnel/stunnel_nfs.pid";
 piddir=`dirname "${pidfile}"`
-if [ ! -d "${piddir}" ]; then
-  mkdir -p "/var/stunnel_nfs/var/run/stunnel"
-  chown stunnel:stunnel "/var/stunnel_nfs/var/run/stunnel"
-fi
-
 
 # If the command doesn't exist, that's probably not going to work
 [ -x ${exec} ] || exit 1

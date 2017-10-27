@@ -116,7 +116,7 @@ class stunnel::config (
   Stdlib::Absolutepath           $app_pki_ca_dir          = $::stunnel::app_pki_ca_dir,
   Stdlib::Absolutepath           $app_pki_crl             = $::stunnel::app_pki_crl,
   Stdlib::Absolutepath           $chroot                  = '/var/stunnel',
-  Stdlib::Absolutepath           $pid                     = '/var/run/stunnel/stunnel.pid',
+  Optional[Stdlib::Absolutepath] $pid                     = undef,
   String                         $setuid                  = $::stunnel::setuid,
   String                         $setgid                  = $::stunnel::setgid,
   String                         $stunnel_debug           = 'err',
@@ -145,6 +145,16 @@ class stunnel::config (
       source => $app_pki_external_source,
       pki    => $pki
     }
+  }
+
+  if $pid =~ Undef {
+    $on_systemd = 'systemd' in $facts['init_systems']
+    $_pid = $on_systemd ? {
+      true    => $pid,
+      default => "/var/run/stunnel/stunnel.pid"
+    }
+  } else {
+    $_pid = $pid
   }
 
   concat { '/etc/stunnel/stunnel.conf':
@@ -239,20 +249,6 @@ class stunnel::config (
     }
   }
 
-  # The selinux context settings are ignored if SELinux is disabled
-  ensure_resource('file', dirname($pid),
-    {
-      'ensure'  => 'directory',
-      'owner'   => $setuid,
-      'group'   => $setgid,
-      'mode'    => '0644',
-      'seluser' => 'system_u',
-      'selrole' => 'object_r',
-      'seltype' => 'stunnel_var_run_t',
-    }
-  )
-
-
   # These templates need variables, that's why they are here
   if 'systemd' in $facts['init_systems'] {
     file { '/etc/systemd/system/stunnel.service':
@@ -270,6 +266,22 @@ class stunnel::config (
 
   }
   else {
+    if $_pid {
+      # The selinux context settings are ignored if SELinux is disabled
+      ensure_resource('file', dirname($_pid),
+        {
+          'ensure'  => 'directory',
+          'owner'   => $setuid,
+          'group'   => $setgid,
+          'mode'    => '0644',
+          'seluser' => 'system_u',
+          'selrole' => 'object_r',
+          'seltype' => 'stunnel_var_run_t',
+          'before'  => 'Service[stunnel]'
+        }
+      )
+    }
+
     file { '/etc/rc.d/init.d/stunnel':
       ensure  => 'present',
       owner   => 'root',
