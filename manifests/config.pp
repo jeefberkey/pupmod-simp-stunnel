@@ -3,7 +3,7 @@
 # @param chroot
 #   The location of the chroot jail, if it is not set to `undef`
 #   If SELinux is set to Enforced or Permissive, `$chroot` will be
-#   set to `undef`.
+#   set to `undef`. This option only affects `stunnel::connection`.
 #
 #   * Do **NOT** make this anything under ``/var/run``
 #
