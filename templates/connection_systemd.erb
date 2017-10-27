@@ -7,6 +7,7 @@ Description=Start a stunnel listener
 [Service]
 Type=forking
 ExecStart=/usr/bin/stunnel /etc/stunnel/stunnel.conf
+PIDFile=<%= @pid %>
 KillMode=process
 LimitNOFILE=1048576
 LimitNPROC=infinity

@@ -76,7 +76,7 @@ describe 'instance' do
         on(host, 'puppet resource service stunnel_nfs ensure=stopped enable=false')
         %w(stunnel_chroot stunnel).each do |service|
           result = on(host, "puppet resource service #{service}").stdout
-          expect(result) to include(/running/)
+          expect(result).to include(/running/)
         end
         [30490,40490].each do |port|
           pid = on(host, "lsof -ti :#{port}").stdout.strip
@@ -91,7 +91,7 @@ describe 'instance' do
         on(host, 'puppet resource service stunnel ensure=stopped enable=false')
         %w(stunnel_chroot stunnel_nfs).each do |service|
           result = on(host, "puppet resource service #{service}").stdout
-          expect(result) to include(/running/)
+          expect(result).to include(/running/)
         end
         [20490,40490].each do |port|
           pid = on(host, "lsof -ti :#{port}").stdout.strip
