@@ -58,16 +58,46 @@ describe 'instance' do
         end
       end
 
-      it 'stunnel_nfs should be listening on 20490' do
-        pid = on(host, 'cat /var/run/stunnel/stunnel_nfs.pid').stdout.strip
-        result = on(host, "netstat -plant | grep #{pid} | awk ' { print $4 }'").stdout.strip
-        expect(result).to match(/0.0.0.0:20490/)
+      [20490,30490,40490].each do |service,port|
+        it "stunnel should be listening on #{port}" do
+          install_package(host, 'lsof')
+          pid = on(host, "lsof -ti :#{port}").stdout.strip
+          result = on(host, "netstat -plant | grep #{pid} | awk ' { print $4 }'").stdout.str
+          expect(result).to match(/0.0.0.0:#{port}/)
+        end
       end
+    end
 
-      it 'stunnel_chroot should be listening on 40490' do
-        pid = on(host, 'cat /var/stunnel_chroot/var/run/stunnel/stunnel_chroot.pid').stdout.strip
-        result = on(host, "netstat -plant | grep #{pid} | awk ' { print $4 }'").stdout.strip
-        expect(result).to match(/0.0.0.0:40490/)
+    context 'killing one instance should not kill the rest' do
+      it 'should have all services running' do
+        apply_manifest_on(host,manifest, catch_failures: true)
+      end
+      it 'after killing an instanced stunnel, have the other stunnel still running' do
+        on(host, 'puppet resource service stunnel_nfs ensure=stopped enable=false')
+        %w(stunnel_chroot stunnel).each do |service|
+          result = on(host, "puppet resource service #{service}").stdout
+          expect(result) to include(/running/)
+        end
+        [30490,40490].each do |port|
+          pid = on(host, "lsof -ti :#{port}").stdout.strip
+          result = on(host, "netstat -plant | grep #{pid} | awk ' { print $4 }'").stdout.str
+          expect(result).to match(/0.0.0.0:#{port}/)
+        end
+      end
+      it 'should restart all services' do
+        apply_manifest_on(host,manifest, catch_failures: true)
+      end
+      it 'should kill the monolithic stunnel and have instances still running'do
+        on(host, 'puppet resource service stunnel ensure=stopped enable=false')
+        %w(stunnel_chroot stunnel_nfs).each do |service|
+          result = on(host, "puppet resource service #{service}").stdout
+          expect(result) to include(/running/)
+        end
+        [20490,40490].each do |port|
+          pid = on(host, "lsof -ti :#{port}").stdout.strip
+          result = on(host, "netstat -plant | grep #{pid} | awk ' { print $4 }'").stdout.str
+          expect(result).to match(/0.0.0.0:#{port}/)
+        end
       end
     end
 
@@ -76,9 +106,10 @@ describe 'instance' do
         %w(stunnel stunnel_chroot stunnel_nfs).each do |service|
           on(host, "puppet resource service #{service} ensure=stopped enable=false")
         end
-        on(host, 'service network restart') # Some network wackiness
+        # There was an issue where the domain fact would cease to exist, causing failures
+        on(host, 'service network restart')
         # Get rid of stunnels
-        on(host, "ps aux | grep -ie stunnel | grep -v 'grep' | awk '{print $2}' | xargs --no-run-if-empty kill -9")
+        # on(host, "ps aux | grep -ie stunnel | grep -v 'grep' | awk '{print $2}' | xargs --no-run-if-empty kill -9")
       end
     end
   end
