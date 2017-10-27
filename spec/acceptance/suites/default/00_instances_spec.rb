@@ -60,9 +60,7 @@ describe 'instance' do
       [20490,30490,40490].each do |port|
         it "stunnel should be listening on #{port}" do
           install_package(host, 'lsof')
-          pid = on(host, "lsof -ti :#{port}").stdout.strip
-          result = on(host, "netstat -plant | grep #{pid} | awk ' { print $4 }'").stdout.strip
-          expect(result).to match(/0.0.0.0:#{port}/)
+          on(host, "netstat -plant | grep `lsof -ti :#{port}` | grep stunnel")
         end
       end
     end
@@ -73,14 +71,18 @@ describe 'instance' do
       end
       it 'after killing an instanced stunnel, have the other stunnel still running' do
         on(host, 'puppet resource service stunnel_nfs ensure=stopped enable=false')
+
         %w(stunnel_chroot stunnel).each do |service|
           result = on(host, "puppet resource service #{service}").stdout
           expect(result).to match(/running/)
         end
+        it 'should not be listening on port 20490' do
+          on(host, 'netstat -plant | grep `lsof -ti :20490` | grep stunnel')
+        end
         [30490,40490].each do |port|
-          pid = on(host, "lsof -ti :#{port}").stdout.strip
-          result = on(host, "netstat -plant | grep #{pid} | awk ' { print $4 }'").stdout.strip
-          expect(result).to match(/0.0.0.0:#{port}/)
+          it "should be listening on #{port}" do
+            on(host, "netstat -plant | grep `lsof -ti :#{port}` | grep stunnel")
+          end
         end
       end
       it 'should restart all services' do
@@ -88,14 +90,18 @@ describe 'instance' do
       end
       it 'should kill the monolithic stunnel and have instances still running'do
         on(host, 'puppet resource service stunnel ensure=stopped enable=false')
+
         %w(stunnel_chroot stunnel_nfs).each do |service|
           result = on(host, "puppet resource service #{service}").stdout
           expect(result).to match(/running/)
         end
+        it 'should not be listening on port 30490' do
+          on(host, 'netstat -plant | grep `lsof -ti :30490` | grep stunnel')
+        end
         [20490,40490].each do |port|
-          pid = on(host, "lsof -ti :#{port}").stdout.strip
-          result = on(host, "netstat -plant | grep #{pid} | awk ' { print $4 }'").stdout.strip
-          expect(result).to match(/0.0.0.0:#{port}/)
+          it "should be listening on #{port}" do
+            on(host, "netstat -plant | grep `lsof -ti :#{port}` | grep stunnel")
+          end
         end
       end
     end

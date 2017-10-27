@@ -41,15 +41,6 @@ group=`grep "setgid[[:space:]]*=" /etc/stunnel/stunnel_<%= @_safe_name %>.conf |
 <% if @_chroot.to_s.length > 0 -%>
 pidfile="<%= "#{@_chroot}#{@pid}" %>";
 piddir=`dirname "${pidfile}"`
-if [ ! -d "${piddir}" ]; then
-<%   if @_se_enabled -%>
-  mkdir -p --context=system_u:object_r:stunnel_var_run_t:s0 "<%= $piddir %>"
-  chown <%= @setuid %>:<%= @setgid %> "<%= $piddir %>"
-<%   else -%>
-  mkdir -p "<%= $piddir %>"
-  chown <%= @setuid %>:<%= @setgid %> "<%= $piddir %>"
-<%   end -%>
-fi
 <% end -%>
 
 

@@ -378,6 +378,20 @@ define stunnel::instance(
     }
   }
 
+  # The selinux context settings are ignored if SELinux is disabled
+  ensure_resource('file', dirname($pid),
+    {
+      'ensure'  => 'directory',
+      'owner'   => $setuid,
+      'group'   => $setgid,
+      'mode'    => '0644',
+      'seluser' => 'system_u',
+      'selrole' => 'object_r',
+      'seltype' => 'stunnel_var_run_t',
+    }
+  )
+
+
   # The rules are pulled together from the accept_* and connect_*
   # variables.
   #

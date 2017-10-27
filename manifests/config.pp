@@ -240,15 +240,17 @@ class stunnel::config (
   }
 
   # The selinux context settings are ignored if SELinux is disabled
-  file { dirname($pid):
-    ensure  => directory,
-    owner   => $setuid,
-    group   => $setgid,
-    mode    => '0644',
-    seluser => 'system_u',
-    selrole => 'object_r',
-    seltype => 'stunnel_var_run_t',
-  }
+  ensure_resource('file', dirname($pid),
+    {
+      'ensure'  => 'directory',
+      'owner'   => $setuid,
+      'group'   => $setgid,
+      'mode'    => '0644',
+      'seluser' => 'system_u',
+      'selrole' => 'object_r',
+      'seltype' => 'stunnel_var_run_t',
+    }
+  )
 
 
   # These templates need variables, that's why they are here
