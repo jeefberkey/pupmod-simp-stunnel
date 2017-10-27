@@ -62,7 +62,7 @@ describe 'instance' do
         it "stunnel should be listening on #{port}" do
           install_package(host, 'lsof')
           pid = on(host, "lsof -ti :#{port}").stdout.strip
-          result = on(host, "netstat -plant | grep #{pid} | awk ' { print $4 }'").stdout.str
+          result = on(host, "netstat -plant | grep #{pid} | awk ' { print $4 }'").stdout.strip
           expect(result).to match(/0.0.0.0:#{port}/)
         end
       end
@@ -80,7 +80,7 @@ describe 'instance' do
         end
         [30490,40490].each do |port|
           pid = on(host, "lsof -ti :#{port}").stdout.strip
-          result = on(host, "netstat -plant | grep #{pid} | awk ' { print $4 }'").stdout.str
+          result = on(host, "netstat -plant | grep #{pid} | awk ' { print $4 }'").stdout.strip
           expect(result).to match(/0.0.0.0:#{port}/)
         end
       end
@@ -95,7 +95,7 @@ describe 'instance' do
         end
         [20490,40490].each do |port|
           pid = on(host, "lsof -ti :#{port}").stdout.strip
-          result = on(host, "netstat -plant | grep #{pid} | awk ' { print $4 }'").stdout.str
+          result = on(host, "netstat -plant | grep #{pid} | awk ' { print $4 }'").stdout.strip
           expect(result).to match(/0.0.0.0:#{port}/)
         end
       end
