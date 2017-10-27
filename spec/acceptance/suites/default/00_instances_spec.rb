@@ -4,36 +4,35 @@ test_name 'instance'
 
 describe 'instance' do
   hosts.each do |host|
+    let(:manifest) { <<-EOF
+      stunnel::instance { 'nfs':
+        client  => false,
+        connect => [2049],
+        accept  => 20490,
+      }
+      stunnel::instance { 'chroot':
+        client  => false,
+        connect => [4049],
+        accept  => 40490,
+        chroot  => '/var/stunnel_chroot'
+      }
+      stunnel::connection { 'rsync':
+        client  => false,
+        connect => [3049],
+        accept  => 30490
+      }
+      EOF
+    }
+    let(:hieradata) {{
+      'simp_options::pki'          => true,
+      'simp_options::pki::source'  => '/etc/pki/simp-testing/pki/',
+      'simp_options::trusted_nets' => ['ANY']
+    }}
 
     # This test verifies the validity of basic stunnel configurations
     # and ensures multiple connections can co-exist as advertised. It
     # does not test stunnel itself.
     context 'set up legacy, chrooted, and non-chrooted connections' do
-      let(:manifest) { <<-EOF
-        stunnel::instance { 'nfs':
-          client  => false,
-          connect => [2049],
-          accept  => 20490,
-        }
-        stunnel::instance { 'chroot':
-          client  => false,
-          connect => [4049],
-          accept  => 40490,
-          chroot  => '/var/stunnel_chroot'
-        }
-        stunnel::connection { 'rsync':
-          client  => false,
-          connect => [3049],
-          accept  => 30490
-        }
-        EOF
-      }
-      let(:hieradata) {{
-        'simp_options::pki'          => true,
-        'simp_options::pki::source'  => '/etc/pki/simp-testing/pki/',
-        'simp_options::trusted_nets' => ['ANY']
-      }}
-
       it 'should apply with no errors' do
         install_package(host, 'epel-release')
         set_hieradata_on(host,hieradata)
