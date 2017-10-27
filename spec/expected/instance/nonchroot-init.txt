@@ -51,7 +51,7 @@ lock_file="/var/lock/subsys/${prog}"
 kill_floaters() {
   retval=1
   if [ ! -f "$pidfile" ]; then
-    pkill -u "$user" "$exec"
+    pkill -u "$user" "${exec} ${conf}"
     retval=$?
   fi
 
@@ -75,7 +75,8 @@ stop() {
   status -p "$pidfile" stunnel 2>&1 /dev/null
   statval=$?
   if [ ! "$statval" -eq 3 ]; then
-    kill_floaters || killproc -p "$pidfile" "$prog"
+    # Send interrupt, then kill aggressively if needed
+    killproc -p "$pidfile" "$prog" || kill_floaters
     RETVAL=$?
     if [[ -f "$lock_file" ]]; then
       rm "$lock_file"

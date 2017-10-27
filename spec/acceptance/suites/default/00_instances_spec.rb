@@ -58,7 +58,7 @@ describe 'instance' do
         end
       end
 
-      [20490,30490,40490].each do |service,port|
+      [20490,30490,40490].each do |port|
         it "stunnel should be listening on #{port}" do
           install_package(host, 'lsof')
           pid = on(host, "lsof -ti :#{port}").stdout.strip
