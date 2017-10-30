@@ -428,7 +428,6 @@ define stunnel::instance(
           'seluser' => 'system_u',
           'selrole' => 'object_r',
           'seltype' => 'stunnel_var_run_t',
-          'before'  => "Service[stunnel_${_safe_name}]"
         }
       )
     }

@@ -196,11 +196,6 @@ describe 'stunnel::instance' do
         }}
         let(:pre_condition) { <<-EOF
           include 'stunnel'
-          stunnel::connection { 'rsync':
-            client  => false,
-            connect => [3049],
-            accept  => 30490
-          }
           EOF
         }
         it { is_expected.to compile.with_all_deps }
