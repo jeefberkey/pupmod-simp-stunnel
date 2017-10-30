@@ -489,7 +489,8 @@ define stunnel::instance(
     hasstatus  => true,
     require    => [
       File[$_service_file],
-      File["/etc/stunnel/stunnel_${_safe_name}.conf"]
+      File["/etc/stunnel/stunnel_${_safe_name}.conf"],
+      File[dirname($_pid)]
     ],
   }
 }
