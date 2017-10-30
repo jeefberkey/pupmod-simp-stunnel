@@ -331,6 +331,8 @@ define stunnel::instance(
   }
 
   if $_chroot !~ Undef {
+    $_stunnel_piddir = File[dirname("${_chroot}${_pid}")]
+
     file { $_chroot:
       ensure => 'directory',
       owner  => 'root',
@@ -393,11 +395,9 @@ define stunnel::instance(
         'mode'    => '0644',
         'seluser' => 'system_u',
         'selrole' => 'object_r',
-        'seltype' => 'stunnel_var_run_t',
-        'before'  => "Service[stunnel_${_safe_name}]"
+        'seltype' => 'stunnel_var_run_t'
       }
     )
-
 
     file { "${_chroot}/etc/pki":
       ensure => 'directory',
@@ -406,18 +406,20 @@ define stunnel::instance(
       mode   => '0640'
     }
 
-    $_require_pki =  $pki ? { true =>  Pki::Copy["stunnel_${_safe_name}"], default =>  undef }
+    $_require_pki =  $pki ? { true => Pki::Copy["stunnel_${_safe_name}"], default =>  undef }
 
     file { "${_chroot}/etc/pki/cacerts":
       source  => "file://${app_pki_dir}/cacerts",
       group   => $setgid,
       mode    => '0640',
       recurse => true,
-      require =>  $_require_pki
+      require => $_require_pki
     }
   }
   else {
     if $_pid {
+      $_stunnel_piddir = File[dirname($_pid)]
+
       # The selinux context settings are ignored if SELinux is disabled
       ensure_resource('file', dirname($_pid),
         {
@@ -430,6 +432,8 @@ define stunnel::instance(
           'seltype' => 'stunnel_var_run_t',
         }
       )
+    } else {
+      $_stunnel_piddir = undef
     }
   }
 
@@ -482,15 +486,13 @@ define stunnel::instance(
     fail("Init systems ${$facts['init_systems']} not supported. Only systemd, upstart supported.")
   }
 
+
   service { "stunnel_${_safe_name}":
     ensure     => 'running',
     enable     => true,
-    hasrestart => true,
-    hasstatus  => true,
     require    => [
       File[$_service_file],
-      File["/etc/stunnel/stunnel_${_safe_name}.conf"],
-      File[dirname($_pid)]
-    ],
+      File["/etc/stunnel/stunnel_${_safe_name}.conf"]
+    ] + $_stunnel_piddir
   }
 }

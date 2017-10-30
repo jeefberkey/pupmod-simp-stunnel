@@ -14,10 +14,7 @@ class stunnel::service {
     # The script takes care of chkconfig
     service { 'stunnel':
       ensure  => running,
-      require => [
-        File['/etc/rc.d/init.d/stunnel'],
-        File[dirname($::stunnel::config::_pid)]
-      ]
+      require => File['/etc/rc.d/init.d/stunnel'],
     }
   }
 }
