@@ -157,6 +157,12 @@ class stunnel::config (
     $_pid = $pid
   }
 
+  if 'systemd' in $facts['init_systems'] {
+    $_foreground = true
+  } else {
+    $_foreground = false
+  }
+
   concat { '/etc/stunnel/stunnel.conf':
     owner          => 'root',
     group          => 'root',
@@ -251,7 +257,6 @@ class stunnel::config (
 
   # These templates need variables, that's why they are here
   if 'systemd' in $facts['init_systems'] {
-    $_foreground = true
     file { '/etc/systemd/system/stunnel.service':
       ensure  => file,
       content => template('stunnel/connection_systemd.erb'),
@@ -267,7 +272,6 @@ class stunnel::config (
 
   }
   else {
-    $_foreground = true
     if $_pid {
       # The selinux context settings are ignored if SELinux is disabled
       ensure_resource('file', dirname($_pid),

@@ -307,6 +307,11 @@ define stunnel::instance(
     $_pid = $pid
   }
 
+  if 'systemd' in $facts['init_systems'] {
+    $_foreground = true
+  } else {
+    $_foreground = false
+  }
 
   file { "/etc/stunnel/stunnel_${_safe_name}.conf":
     ensure  => 'present',

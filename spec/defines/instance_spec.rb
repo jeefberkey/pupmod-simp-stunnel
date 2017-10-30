@@ -5,6 +5,7 @@ setgid = stunnel
 setuid = stunnel
 debug = err
 syslog = no
+foreground = yes
 pid =
 engine = auto
 fips = yes
@@ -30,6 +31,7 @@ setgid = stunnel
 setuid = stunnel
 debug = err
 syslog = no
+foreground = no
 pid = /var/run/stunnel/stunnel_nfs.pid
 engine = auto
 [nfs]
