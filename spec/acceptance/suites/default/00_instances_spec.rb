@@ -73,7 +73,7 @@ describe 'instance' do
         on(host, 'puppet resource service stunnel_nfs ensure=stopped enable=false')
 
         %w(stunnel_chroot stunnel).each do |service|
-          result = on(host, "puppet resource service #{sevice}").stdout
+          result = on(host, "puppet resource service #{service}").stdout
           expect(result).to match(/running/)
         end
         on(host, 'netstat -plant | grep `lsof -ti :20490` | grep stunnel', acceptable_exit_codes: [1])
