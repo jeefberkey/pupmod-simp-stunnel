@@ -196,7 +196,12 @@ class stunnel::config (
     content => template('stunnel/connection_conf.erb')
   }
 
-  if $_chroot {
+  if $_chroot !~ Undef {
+    # $chroot should never be undef here, or just '/'.
+    if $_chroot in ['/',''] {
+      fail("stunnel: \$chroot should not be root ('/')")
+    }
+
     # The _chroot directory
     file { $_chroot:
       ensure => 'directory',
@@ -307,7 +312,7 @@ class stunnel::config (
     }
 
     file { '/etc/rc.d/init.d/stunnel':
-      ensure  => 'present',
+      ensure  => 'file',
       owner   => 'root',
       group   => 'root',
       mode    => '0750',

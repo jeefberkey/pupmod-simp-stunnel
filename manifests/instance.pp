@@ -319,7 +319,7 @@ define stunnel::instance(
   }
 
   file { "/etc/stunnel/stunnel_managed_by_puppet_${_safe_name}.conf":
-    ensure  => 'present',
+    ensure  => 'file',
     owner   => 'root',
     group   => 'root',
     mode    => '0600',
@@ -335,7 +335,12 @@ define stunnel::instance(
     }
   }
 
-  if $_chroot {
+  if $_chroot !~ Undef {
+    # $chroot should never be undef here, or just '/'.
+    if $_chroot in ['/',''] {
+      fail("stunnel::instance ${name}: \$chroot should not be root ('/')")
+    }
+
     if $_pid {
       $_stunnel_pid_dirname = dirname("${_chroot}/${_pid}")
 
